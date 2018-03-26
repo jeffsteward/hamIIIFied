@@ -6,12 +6,12 @@ import requests
 import configparser
 import html2text
 from PIL import Image
+from utils.HAM import HAM
 
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-hamBaseURL = "https://api.harvardartmuseums.org"
-hamAPIKey = config["HAM"]["API_KEY"]
+ham = HAM(config["HAM"]["API_KEY"])
 
 iiifImageFragmentURLTemplate = "%s/%s/full/0/native.jpg"
 hamShortURLTemplate = "http://hvrd.art/o/%s"
@@ -172,45 +172,26 @@ def append_images(images, direction='horizontal',
     return new_im
 
 def get_annotation():
-	url = hamBaseURL + "/annotation"
-	qs = {
-		"apikey": hamAPIKey,
+	filters = {
 		"q": "body:VERY_UNLIKELY",
-		"size": 1,
 		"sort": "random"
 	}
 
-	response = requests.get(url, params=qs)
-	data = response.json()
-
+	data = ham.search("annotation", filters=filters, size=1)
 	return data["records"][0]
 
 
 def get_image(imageid):
-	url = hamBaseURL + "/image"
-	qs = {
-		"apikey": hamAPIKey,
-		"q": "imageid:" + str(imageid),
-		"size": 1
-	}
-
-	response = requests.get(url, params=qs)
-	data = response.json()
-
-	return data["records"][0]
+	data = ham.get("image", imageid)
+	return data
 
 
 def get_object_by_idsid(idsid):
-	url = hamBaseURL + "/object"
-	qs = {
-		"apikey": hamAPIKey,
-		"q": "images.idsid:" + str(idsid),
-		"size": 1
+	filters = {
+		"q": "images.idsid:" + str(idsid)
 	}
 
-	response = requests.get(url, params=qs)
-	data = response.json()
-
+	data = ham.search("object", filters=filters, size=1)
 	return data["records"][0]
 
 
