@@ -21,7 +21,10 @@ def main():
 	if not os.path.exists("temp"):
 		os.makedirs("temp")
 
-	(filename, message) = make_collage()
+	(filename, message) = make_text_collage()
+	tweet_it(filename, message)
+
+	(filename, message) = make_face_collage()
 	tweet_it(filename, message)
 
 	(filename, message) = make_face()
@@ -55,7 +58,47 @@ def make_face():
 
 	return filename, message
 
-def make_collage():
+
+def make_text_collage():
+	filters = {
+		"q": "NOT(body:VERY_UNLIKELY)",
+		"sort": "random"
+	}	
+	data = ham.search("annotation", filters=filters, size=4)
+	annotations = data["records"]
+
+	images = []
+	phrases = []
+
+	for annotation in annotations:
+		annotation["image"] = get_image(annotation["imageid"])
+
+		phrases.append(annotation["body"])
+
+		# rework some of data		
+		fragment = annotation["selectors"][0]["value"]
+		region = fragment[5:]
+
+		imageURL = iiifImageFragmentURLTemplate % (annotation["image"]["iiifbaseuri"], region)
+
+		filename = 'temp/file-%s.jpg' % str(annotation["id"])
+		request = requests.get(imageURL, stream=True)
+		if request.status_code == 200:
+			with open(filename, 'wb') as image:
+				for chunk in request:
+					image.write(chunk)
+
+			images.append(Image.open(filename))
+
+	# make the collage image
+	collage = append_images(images, direction='vertical', aligment='left')
+	collage.save("temp/collage.jpg", "jpeg")
+
+	message = "The machine writes:\n %s" % (" ".join(phrases))
+
+	return "temp/collage.jpg", message
+
+def make_face_collage():
 	imageFilenames = []
 	annotations = []
 	offset = 25
