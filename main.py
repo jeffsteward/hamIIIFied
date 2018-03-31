@@ -99,12 +99,14 @@ def make_text_collage():
 	return "temp/collage.jpg", message
 
 def make_face_collage():
-	imageFilenames = []
-	annotations = []
-	offset = 25
+	filters = {
+		"q": "body:VERY_UNLIKELY",
+		"sort": "random"
+	}	
+	data = ham.search("annotation", filters=filters, size=4)
+	annotations = data["records"]
 
-	for x in range(0,4):
-		annotation = get_annotation()
+	for annotation in annotations:
 		annotation["image"] = get_image(annotation["imageid"])
 
 		# rework some of data		
@@ -114,8 +116,6 @@ def make_face_collage():
 		annotation["width"] = parts[2]
 		annotation["height"] = parts[3]
 
-		annotations.append(annotation)
-
 	# sort the images from shortest to tallest
 	sorted_annotations = sorted(annotations, key=lambda k: int(k["height"]))
 
@@ -124,6 +124,9 @@ def make_face_collage():
 	collage_annotations.append(sorted_annotations[2])
 	collage_annotations.append(sorted_annotations[3])
 	collage_annotations.append(sorted_annotations[1])
+
+	images = []
+	offset = 25
 
 	for x, annotation in enumerate(collage_annotations):
 		# calculate the slice of the fragment		
@@ -144,16 +147,8 @@ def make_face_collage():
 			with open(filename, 'wb') as image:
 				for chunk in request:
 					image.write(chunk)
-
-		imageFilenames.append(filename)
-
-	# images = map(Image.open, ["temp/file-0.jpg", "temp/file-1.jpg", "temp/file-2.jpg", "temp/file-3.jpg"])
-
-	images = []
-	images.append(Image.open("temp/file-0.jpg"))
-	images.append(Image.open("temp/file-1.jpg"))
-	images.append(Image.open("temp/file-2.jpg"))
-	images.append(Image.open("temp/file-3.jpg"))
+		
+			images.append(Image.open(filename))
 
 	combo_1 = append_images(images, direction='horizontal')
 	combo_1.save("temp/collage.jpg", "jpeg")
