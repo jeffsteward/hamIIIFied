@@ -40,8 +40,10 @@ def tweet_it(filename, message):
 
 
 def make_face(): 
-	annotation = get_annotation()
-	image = get_image(annotation["imageid"])
+	data = ham.search("annotation", filters={"q": "body:VERY_UNLIKELY"}, size=1, sort="random")
+	annotation = data["records"][0]
+
+	image = ham.get("image", annotation["imageid"])
 	obj = get_object_by_idsid(annotation["idsid"])
 
 	fragment = annotation["selectors"][0]["value"]
@@ -70,7 +72,7 @@ def make_text_collage():
 	phrases = []
 
 	for annotation in annotations:
-		annotation["image"] = get_image(annotation["imageid"])
+		annotation["image"] = ham.get("image", annotation["imageid"])
 
 		phrases.append(annotation["body"])
 
@@ -105,7 +107,7 @@ def make_face_collage():
 	annotations = data["records"]
 
 	for annotation in annotations:
-		annotation["image"] = get_image(annotation["imageid"])
+		annotation["image"] = ham.get("image", annotation["imageid"])
 
 		# rework some of data		
 		fragment = annotation["selectors"][0]["value"]
@@ -206,19 +208,6 @@ def append_images(images, direction='horizontal',
 
 
     return new_im
-
-def get_annotation():
-	filters = {
-		"q": "body:VERY_UNLIKELY"
-	}
-
-	data = ham.search("annotation", filters=filters, size=1, sort="random")
-	return data["records"][0]
-
-
-def get_image(imageid):
-	data = ham.get("image", imageid)
-	return data
 
 
 def get_object_by_idsid(idsid):
