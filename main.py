@@ -7,6 +7,7 @@ import configparser
 import html2text
 from PIL import Image
 from utils.HAM import HAM
+from random import randint
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -20,15 +21,17 @@ def main():
 	""" Main entry point of the app """
 	if not os.path.exists("temp"):
 		os.makedirs("temp")
+    
+	if randint(0, 1) == 0:
+		(filename, message) = make_text_collage()
+		tweet_it(filename, message)
+	
+	else:
+		(filename, message) = make_face_collage()
+		tweet_it(filename, message)
 
-	(filename, message) = make_text_collage()
-	tweet_it(filename, message)
-
-	(filename, message) = make_face_collage()
-	tweet_it(filename, message)
-
-	(filename, message) = make_face()
-	tweet_it(filename, message)
+		(filename, message) = make_face()
+		tweet_it(filename, message)
 
 
 def tweet_it(filename, message):
