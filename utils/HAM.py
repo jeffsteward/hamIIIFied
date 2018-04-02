@@ -6,13 +6,14 @@ class HAM():
 		self.host = "https://api.harvardartmuseums.org"
 		self.apikey = apikey
 
-	def search(self, type, filters={}, size=10, page=1, fields=""):
+	def search(self, type, filters={}, size=10, page=1, fields="", sort=""):
 		url = "{host}/{endpoint}".format(host=self.host, endpoint=type)
 		query = {
 			"apikey": self.apikey,
 			"size": size,
 			"page": page,
-			"fields": fields
+			"fields": fields,
+			"sort": sort
 		}
 		response = requests.get(url, params={**query, **filters})
 

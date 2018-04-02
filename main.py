@@ -61,10 +61,9 @@ def make_face():
 
 def make_text_collage():
 	filters = {
-		"q": "NOT(body:VERY_UNLIKELY)",
-		"sort": "random"
+		"q": "NOT(body:VERY_UNLIKELY)"
 	}	
-	data = ham.search("annotation", filters=filters, size=4)
+	data = ham.search("annotation", filters=filters, size=4, sort="random")
 	annotations = data["records"]
 
 	images = []
@@ -100,10 +99,9 @@ def make_text_collage():
 
 def make_face_collage():
 	filters = {
-		"q": "body:VERY_UNLIKELY",
-		"sort": "random"
+		"q": "body:VERY_UNLIKELY"
 	}	
-	data = ham.search("annotation", filters=filters, size=4)
+	data = ham.search("annotation", filters=filters, size=4, sort="random")
 	annotations = data["records"]
 
 	for annotation in annotations:
@@ -211,11 +209,10 @@ def append_images(images, direction='horizontal',
 
 def get_annotation():
 	filters = {
-		"q": "body:VERY_UNLIKELY",
-		"sort": "random"
+		"q": "body:VERY_UNLIKELY"
 	}
 
-	data = ham.search("annotation", filters=filters, size=1)
+	data = ham.search("annotation", filters=filters, size=1, sort="random")
 	return data["records"][0]
 
 
