@@ -23,7 +23,7 @@ def main():
 		os.makedirs("temp")
 
 	if randint(0, 1) == 0:
-		(filename, message) = make_text_collage()
+		(filename, message) = make_text_collage(randint(4,8))
 		tweet_it(filename, message)
 
 	else:
@@ -64,19 +64,25 @@ def make_face():
 	return filename, message
 
 
-def make_text_collage():
+def make_text_collage(size=4):
 	filters = {
 		"q": "NOT(body:VERY_UNLIKELY)"
 	}
-	data = ham.search("annotation", filters=filters, size=4, sort="random")
+	data = ham.search("annotation", filters=filters, size=size, sort="random")
 	annotations = data["records"]
 
 	images = []
 	phrases = []
+	urls = []
 
 	for annotation in annotations:
+		# get more info about the image the annotation is on
 		annotation["image"] = ham.get("image", annotation["imageid"])
 
+		# get more info about the object that the image is of
+		annotation["object"] = get_object_by_idsid(annotation["idsid"])
+
+		urls.append(hamShortURLTemplate % str(annotation["object"]["id"]))
 		phrases.append(annotation["body"])
 
 		# rework some of data
@@ -98,7 +104,7 @@ def make_text_collage():
 	collage = append_images(images, direction='vertical', aligment='left')
 	collage.save("temp/collage.jpg", "jpeg")
 
-	message = "The machine writes:\n %s" % (" ".join(phrases))
+	message = "The machine writes from %s:\n\n %s" % (",".join(urls), " ".join(phrases))
 
 	return "temp/collage.jpg", message
 
