@@ -104,7 +104,7 @@ def make_text_collage(size=4):
 	collage = append_images(images, direction='vertical', aligment='left')
 	collage.save("temp/collage.jpg", "jpeg")
 
-	message = "The machine writes from %s:\n\n %s" % (",".join(urls), " ".join(phrases))
+	message = "The machine writes from %s:\n\n %s" % (", ".join(urls), " ".join(phrases))
 
 	return "temp/collage.jpg", message
 
