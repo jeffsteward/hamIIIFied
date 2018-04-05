@@ -21,11 +21,11 @@ def main():
 	""" Main entry point of the app """
 	if not os.path.exists("temp"):
 		os.makedirs("temp")
-    
+
 	if randint(0, 1) == 0:
 		(filename, message) = make_text_collage()
 		tweet_it(filename, message)
-	
+
 	else:
 		(filename, message) = make_face_collage()
 		tweet_it(filename, message)
@@ -42,7 +42,7 @@ def tweet_it(filename, message):
 	api.update_with_media(filename=filename, status=message)
 
 
-def make_face(): 
+def make_face():
 	data = ham.search("annotation", filters={"q": "body:VERY_UNLIKELY"}, size=1, sort="random")
 	annotation = data["records"][0]
 
@@ -67,7 +67,7 @@ def make_face():
 def make_text_collage():
 	filters = {
 		"q": "NOT(body:VERY_UNLIKELY)"
-	}	
+	}
 	data = ham.search("annotation", filters=filters, size=4, sort="random")
 	annotations = data["records"]
 
@@ -79,7 +79,7 @@ def make_text_collage():
 
 		phrases.append(annotation["body"])
 
-		# rework some of data		
+		# rework some of data
 		fragment = annotation["selectors"][0]["value"]
 		region = fragment[5:]
 
@@ -102,17 +102,19 @@ def make_text_collage():
 
 	return "temp/collage.jpg", message
 
-def make_face_collage():
-	filters = {
-		"q": "body:VERY_UNLIKELY"
-	}	
-	data = ham.search("annotation", filters=filters, size=4, sort="random")
+def make_face_collage(size=4):
+	data = ham.search("annotation", filters={"q": "body:VERY_UNLIKELY"}, size=size, sort="random")
 	annotations = data["records"]
 
 	for annotation in annotations:
+		# get more info about the image the annotation is on
 		annotation["image"] = ham.get("image", annotation["imageid"])
 
-		# rework some of data		
+		# get more info about the object that the image is of
+		annotation["object"] = get_object_by_idsid(annotation["idsid"])
+		annotation["shorturl"] = hamShortURLTemplate % str(annotation["object"]["id"])
+
+		# rework the xywh data in the fragment
 		fragment = annotation["selectors"][0]["value"]
 		coords = fragment[5:]
 		parts = coords.split(",")
@@ -122,21 +124,24 @@ def make_face_collage():
 	# sort the images from shortest to tallest
 	sorted_annotations = sorted(annotations, key=lambda k: int(k["height"]))
 
-	collage_annotations = []
-	collage_annotations.append(sorted_annotations[0])
-	collage_annotations.append(sorted_annotations[2])
-	collage_annotations.append(sorted_annotations[3])
-	collage_annotations.append(sorted_annotations[1])
+	# split the sorted list in two and reassemble to form a pyramid-ish distribution of slices
+	#  ***                **
+	# ***** rather than  ***
+	#  ***              ****
+	left_half = sorted_annotations[0::2]
+	right_half = sorted_annotations[1::2]
+	right_half.reverse()
+	collage_annotations = left_half + right_half
 
 	images = []
 	offset = 25
 
 	for x, annotation in enumerate(collage_annotations):
-		# calculate the slice of the fragment		
+		# calculate the slice of the fragment
 		fragment = annotation["selectors"][0]["value"]
 		coords = fragment[5:]
 		parts = coords.split(",")
-		width = int(parts[2])/4
+		width = int(parts[2])/size
 		padding = (offset if (int(parts[0]) > offset) else 0)
 		parts[0] = str(int(parts[0]) + int(width * x) - int(padding/2))
 		parts[2] = str(int(width) + padding)
@@ -150,13 +155,15 @@ def make_face_collage():
 			with open(filename, 'wb') as image:
 				for chunk in request:
 					image.write(chunk)
-		
+
 			images.append(Image.open(filename))
 
 	combo_1 = append_images(images, direction='horizontal')
 	combo_1.save("temp/collage.jpg", "jpeg")
 
-	message = "The machine makes collages:\n"
+	url_list = ", ".join([d["shorturl"] for d in annotations])
+
+	message = "The machine makes collages from %s:\n" % (url_list)
 
 	return "temp/collage.jpg", message
 
