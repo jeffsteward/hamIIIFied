@@ -27,7 +27,7 @@ def main():
 		tweet_it(filename, message)
 
 	else:
-		(filename, message) = make_face_collage()
+		(filename, message) = make_face_collage(randint(4,6))
 		tweet_it(filename, message)
 
 		(filename, message) = make_face()
