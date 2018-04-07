@@ -82,8 +82,16 @@ def make_text_collage(size=4):
 		# get more info about the object that the image is of
 		annotation["object"] = get_object_by_idsid(annotation["idsid"])
 
+		# clean up annotations in the form "<p>age: 28<br/>gender: Female</p>"
+		if "<br/>" in annotation["body"]:
+			phrase = annotation["body"].replace("<p>age: ","")
+			phrase = phrase.replace("<br/>gender: ", " year old ")
+			phrase = phrase.replace("</p>","")
+			phrases.append(phrase.lower())
+		else:
+			phrases.append(annotation["body"])
+
 		urls.append(hamShortURLTemplate % str(annotation["object"]["id"]))
-		phrases.append(annotation["body"])
 
 		# rework some of data
 		fragment = annotation["selectors"][0]["value"]
