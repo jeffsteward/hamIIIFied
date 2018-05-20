@@ -66,7 +66,7 @@ def make_face():
 
 def make_text_collage(size=4):
 	filters = {
-		"q": "NOT(body:VERY_UNLIKELY)"
+		"q": "feature:text"
 	}
 	data = ham.search("annotation", filters=filters, size=size, sort="random")
 	annotations = data["records"]
@@ -117,7 +117,7 @@ def make_text_collage(size=4):
 	return "temp/collage.jpg", message
 
 def make_face_collage(size=4):
-	data = ham.search("annotation", filters={"q": "body:VERY_UNLIKELY"}, size=size, sort="random")
+	data = ham.search("annotation", filters={"q": "feature:face"}, size=size, sort="random")
 	annotations = data["records"]
 
 	for annotation in annotations:
