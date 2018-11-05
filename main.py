@@ -66,7 +66,7 @@ def make_face():
 
 def make_text_collage(size=4):
 	filters = {
-		"q": "feature:text"
+		"q": "type:text"
 	}
 	data = ham.search("annotation", filters=filters, size=size, sort="random")
 	annotations = data["records"]
@@ -91,7 +91,8 @@ def make_text_collage(size=4):
 		else:
 			phrases.append(annotation["body"])
 
-		urls.append(hamShortURLTemplate % str(annotation["object"]["id"]))
+		if "id" in annotation["object"]: 
+			urls.append(hamShortURLTemplate % str(annotation["object"]["id"]))
 
 		# rework some of data
 		fragment = annotation["selectors"][0]["value"]
@@ -117,16 +118,19 @@ def make_text_collage(size=4):
 	return "temp/collage.jpg", message
 
 def make_face_collage(size=4):
-	data = ham.search("annotation", filters={"q": "feature:face"}, size=size, sort="random")
+	data = ham.search("annotation", filters={"q": "type:face"}, size=size, sort="random")
 	annotations = data["records"]
-
+	
 	for annotation in annotations:
 		# get more info about the image the annotation is on
 		annotation["image"] = ham.get("image", annotation["imageid"])
 
 		# get more info about the object that the image is of
 		annotation["object"] = get_object_by_idsid(annotation["idsid"])
-		annotation["shorturl"] = hamShortURLTemplate % str(annotation["object"]["id"])
+		if "id" in annotation["object"]:
+			annotation["shorturl"] = hamShortURLTemplate % str(annotation["object"]["id"])
+		else: 
+			annotation["shorturl"] = ""
 
 		# rework the xywh data in the fragment
 		fragment = annotation["selectors"][0]["value"]
@@ -240,7 +244,10 @@ def get_object_by_idsid(idsid):
 	}
 
 	data = ham.search("object", filters=filters, size=1)
-	return data["records"][0]
+	if len(data["records"]) > 0:
+		return data["records"][0]
+	else:
+		return []
 
 
 if __name__ == "__main__":
