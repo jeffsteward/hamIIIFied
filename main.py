@@ -22,16 +22,20 @@ def main():
 	if not os.path.exists("temp"):
 		os.makedirs("temp")
 
-	if randint(0, 1) == 0:
+	random = randint(0,3)
+	if random == 0:
 		(filename, message) = make_text_collage(randint(4,8))
-		tweet_it(filename, message)
 
-	else:
+	elif random == 1:
 		(filename, message) = make_face_collage(randint(4,6))
-		tweet_it(filename, message)
 
+	elif random == 2:
 		(filename, message) = make_face()
-		tweet_it(filename, message)
+
+	else: 
+		(filename, message) = make_guerrilla()
+
+	tweet_it(filename, message)
 
 
 def tweet_it(filename, message):
@@ -184,6 +188,48 @@ def make_face_collage(size=4):
 	message = "The machine makes collages from %s:\n" % (url_list)
 
 	return "temp/collage.jpg", message
+
+def make_guerrilla():
+	ggMaskImageURL = "https://ids.lib.harvard.edu/ids/iiif/400595669"
+	ggMaskRegion = "89,61,1119,1715"
+	images = []
+
+	data = ham.search("annotation", filters={"q": "type:face"}, size=1, sort="random")
+	annotations = data["records"]
+	
+	# get the main image
+	filename = 'temp/file-%s.jpg' % str(annotations[0]["imageid"])	
+	request = requests.get(annotations[0]["target"], stream=True)
+	if request.status_code == 200:
+		with open(filename, 'wb') as image:
+			for chunk in request:
+				image.write(chunk)
+
+		images.append(Image.open(filename))
+
+	# get the position of the face
+	fragment = annotations[0]["selectors"][0]["value"]
+	coords = fragment[5:]
+	parts = coords.split(",")
+
+	# size the guerrilla mask
+	ggImage = ggMaskImageURL + "/" + ggMaskRegion + "/" + parts[2] + ",/0/native.jpg"
+	request = requests.get(ggImage, stream=True)
+	ggFilename = "temp/file-gg.jpg"
+	if request.status_code == 200:
+		with open(ggFilename, 'wb') as image:
+			for chunk in request:
+				image.write(chunk)
+				
+		images.append(Image.open(ggFilename))
+
+	# create the collage
+	images[0].paste(images[1], (int(parts[0]), int(parts[1])))
+	images[0].save("temp/collage-gg.jpg", "jpeg")
+
+	message = "The guerrillas strike again:"
+
+	return "temp/collage-gg.jpg", message
 
 def append_images(images, direction='horizontal',
                   bg_color=(255,255,255), aligment='center'):
